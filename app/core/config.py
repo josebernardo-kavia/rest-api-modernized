@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     )
     LOG_LEVEL: str = Field(default="INFO", description="Python logging level (e.g., INFO, DEBUG).")
 
+    PORT: int = Field(
+        default=3002,
+        ge=1,
+        le=65535,
+        description="Port for the HTTP server (typically used by container/runtime).",
+    )
+
     # Database
     DATABASE_URL: str = Field(
         default="",

@@ -27,7 +27,8 @@ Core variables:
 - `APP_NAME`
 - `APP_VERSION`
 - `API_PREFIX` (default `/api`)
-- `BACKEND_CORS_ORIGINS` (recommended JSON array)
+- `PORT` (default for preview/dev: `3002`)
+- `BACKEND_CORS_ORIGINS` (recommended JSON array; default for preview/dev: `["http://localhost:3003"]`)
 - `LOG_LEVEL`
 
 Database (when enabled):
@@ -73,8 +74,11 @@ Notes:
 ### 6) Run the server
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 3002 --reload
 ```
+
+Notes:
+- In containerized deployments, the platform may use `PORT` to decide which port to bind; the command above explicitly sets `--port`.
 
 ## Endpoints
 
