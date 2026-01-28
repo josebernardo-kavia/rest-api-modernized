@@ -24,7 +24,10 @@ from app.middleware.correlation import CorrelationIdMiddleware
 from app.openapi.metadata import OPENAPI_TAGS
 from app.routers.health import router as health_router
 from app.routers.info import router as info_router
+from app.routers.projects import router as projects_router
 from app.routers.protected import router as protected_router
+from app.routers.tasks import router as tasks_router
+from app.routers.vulnerabilities import router as vulnerabilities_router
 
 
 def _parse_cors_origins(origins: List[str]) -> List[str]:
@@ -128,6 +131,9 @@ api_app.include_router(api_routes_router)
 api_app.include_router(health_router)
 api_app.include_router(info_router)
 api_app.include_router(protected_router)
+api_app.include_router(projects_router)
+api_app.include_router(tasks_router)
+api_app.include_router(vulnerabilities_router)
 
 # Mount the API app under prefix
 app.mount(settings.API_PREFIX, api_app)

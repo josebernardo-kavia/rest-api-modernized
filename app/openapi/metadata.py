@@ -19,4 +19,16 @@ OPENAPI_TAGS = [
         "name": "Auth",
         "description": "Authentication/authorization helpers and protected example endpoints.",
     },
+    {
+        "name": "Projects",
+        "description": "Project management (CRUD, filtering, pagination).",
+    },
+    {
+        "name": "Tasks",
+        "description": "Task management (CRUD, filtering, pagination).",
+    },
+    {
+        "name": "Vulnerabilities",
+        "description": "Vulnerability management (CRUD, filtering, pagination).",
+    },
 ]

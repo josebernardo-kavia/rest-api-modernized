@@ -18,6 +18,7 @@ router = APIRouter(tags=["Auth"])
     description="Returns the authenticated user principal derived from the Bearer access token.",
     operation_id="auth_me",
     responses=COMMON_ERROR_RESPONSES,
+    security=[{"BearerAuth": []}],
 )
 async def me(user: AuthenticatedUser = Security(get_current_user)) -> Dict[str, Any]:
     """
@@ -46,6 +47,7 @@ async def me(user: AuthenticatedUser = Security(get_current_user)) -> Dict[str, 
     description="Returns basic identity information for the current authenticated user.",
     operation_id="protected_example",
     responses=COMMON_ERROR_RESPONSES,
+    security=[{"BearerAuth": []}],
 )
 async def protected_example(user: AuthenticatedUser = Security(get_current_user)) -> Dict[str, Any]:
     """
@@ -73,6 +75,7 @@ async def protected_example(user: AuthenticatedUser = Security(get_current_user)
     description="Requires a valid token AND at least one of the configured admin roles.",
     operation_id="protected_admin_example",
     responses=COMMON_ERROR_RESPONSES,
+    security=[{"BearerAuth": []}],
 )
 async def protected_admin_example(
     user: AuthenticatedUser = Depends(require_roles(["admin", "realm-admin"])),
