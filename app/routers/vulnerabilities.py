@@ -5,13 +5,12 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
+from fastapi import APIRouter, Depends, Query, Security, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import AuthenticatedUser, get_current_user, require_roles
 from app.common.errors import COMMON_ERROR_RESPONSES
 from app.dependencies.db import get_db_session
-from app.domain.errors import NotFoundError
 from app.domain.schemas import (
     ListResponse,
     VulnerabilityCreate,
@@ -42,22 +41,31 @@ async def create_vulnerability(
     PUBLIC_INTERFACE
     Create a vulnerability.
 
+    Example request:
+        {
+          "project_id": "00000000-0000-0000-0000-000000000000",
+          "title": "SQL Injection in search endpoint",
+          "description": "Unsanitized parameter concatenation.",
+          "severity": "high",
+          "status": "open"
+        }
+
     Returns:
         The created vulnerability.
+
+    Errors:
+        - 404 (problem+json): if the referenced project does not exist.
     """
     svc = VulnerabilityService(db)
-    try:
-        vuln = await svc.create(
-            user=user,
-            project_id=payload.project_id,
-            title=payload.title,
-            description=payload.description,
-            severity=payload.severity,
-            status=payload.status,
-        )
-        return VulnerabilityRead.model_validate(vuln)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    vuln = await svc.create(
+        user=user,
+        project_id=payload.project_id,
+        title=payload.title,
+        description=payload.description,
+        severity=payload.severity,
+        status=payload.status,
+    )
+    return VulnerabilityRead.model_validate(vuln)
 
 
 @router.get(
@@ -123,13 +131,13 @@ async def get_vulnerability(
 
     Returns:
         The vulnerability.
+
+    Errors:
+        - 404 (problem+json): if the vulnerability does not exist.
     """
     svc = VulnerabilityService(db)
-    try:
-        vuln = await svc.get(vulnerability_id=vulnerability_id)
-        return VulnerabilityRead.model_validate(vuln)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    vuln = await svc.get(vulnerability_id=vulnerability_id)
+    return VulnerabilityRead.model_validate(vuln)
 
 
 @router.patch(
@@ -151,22 +159,25 @@ async def update_vulnerability(
     PUBLIC_INTERFACE
     Update a vulnerability by id (partial update).
 
+    Example request:
+        { "status": "triaged", "severity": "critical" }
+
     Returns:
         Updated vulnerability.
+
+    Errors:
+        - 404 (problem+json): if the vulnerability does not exist.
     """
     svc = VulnerabilityService(db)
-    try:
-        vuln = await svc.update(
-            user=user,
-            vulnerability_id=vulnerability_id,
-            title=payload.title,
-            description=payload.description,
-            severity=payload.severity,
-            status=payload.status,
-        )
-        return VulnerabilityRead.model_validate(vuln)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    vuln = await svc.update(
+        user=user,
+        vulnerability_id=vulnerability_id,
+        title=payload.title,
+        description=payload.description,
+        severity=payload.severity,
+        status=payload.status,
+    )
+    return VulnerabilityRead.model_validate(vuln)
 
 
 @router.delete(
@@ -192,12 +203,11 @@ async def delete_vulnerability(
 
     Returns:
         None.
+
+    Errors:
+        - 404 (problem+json): if the vulnerability does not exist.
+        - 403 (problem+json): if the user lacks required roles.
     """
     svc = VulnerabilityService(db)
-    try:
-        await svc.delete(user=user, vulnerability_id=vulnerability_id)
-        return None
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except PermissionError as exc:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    await svc.delete(user=user, vulnerability_id=vulnerability_id)
+    return None

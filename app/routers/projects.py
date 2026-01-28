@@ -5,13 +5,12 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
+from fastapi import APIRouter, Depends, Query, Security, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import AuthenticatedUser, get_current_user, require_roles
 from app.common.errors import COMMON_ERROR_RESPONSES
 from app.dependencies.db import get_db_session
-from app.domain.errors import NotFoundError
 from app.domain.schemas import ListResponse, ProjectCreate, ProjectRead, ProjectUpdate
 from app.domain.services import ProjectService
 
@@ -40,15 +39,18 @@ async def create_project(
     RBAC:
         Requires role: admin OR realm-admin.
 
+    Example request:
+        {
+          "name": "Acme Red Team Q1",
+          "description": "Quarterly engagement tracking."
+        }
+
     Returns:
         The created project.
     """
     svc = ProjectService(db)
-    try:
-        project = await svc.create(user=user, name=payload.name, description=payload.description)
-        return ProjectRead.model_validate(project)
-    except PermissionError as exc:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    project = await svc.create(user=user, name=payload.name, description=payload.description)
+    return ProjectRead.model_validate(project)
 
 
 @router.get(
@@ -104,13 +106,13 @@ async def get_project(
 
     Returns:
         The project.
+
+    Errors:
+        - 404 (problem+json): if the project does not exist.
     """
     svc = ProjectService(db)
-    try:
-        project = await svc.get(project_id=project_id)
-        return ProjectRead.model_validate(project)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    project = await svc.get(project_id=project_id)
+    return ProjectRead.model_validate(project)
 
 
 @router.patch(
@@ -135,22 +137,24 @@ async def update_project(
     RBAC:
         Requires role: admin OR realm-admin.
 
+    Example request:
+        { "description": "Updated description" }
+
     Returns:
         Updated project.
+
+    Errors:
+        - 404 (problem+json): if the project does not exist.
+        - 403 (problem+json): if the user lacks required roles.
     """
     svc = ProjectService(db)
-    try:
-        project = await svc.update(
-            user=user,
-            project_id=project_id,
-            name=payload.name,
-            description=payload.description,
-        )
-        return ProjectRead.model_validate(project)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except PermissionError as exc:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    project = await svc.update(
+        user=user,
+        project_id=project_id,
+        name=payload.name,
+        description=payload.description,
+    )
+    return ProjectRead.model_validate(project)
 
 
 @router.delete(
@@ -176,12 +180,11 @@ async def delete_project(
 
     Returns:
         None.
+
+    Errors:
+        - 404 (problem+json): if the project does not exist.
+        - 403 (problem+json): if the user lacks required roles.
     """
     svc = ProjectService(db)
-    try:
-        await svc.delete(user=user, project_id=project_id)
-        return None
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except PermissionError as exc:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    await svc.delete(user=user, project_id=project_id)
+    return None

@@ -5,7 +5,10 @@ from __future__ import annotations
 OPENAPI_TAGS = [
     {
         "name": "Root",
-        "description": "Top-level endpoints (root and basic service metadata).",
+        "description": (
+            "Top-level endpoints (root, API root, and general documentation helpers). "
+            "All error responses use RFC7807 `application/problem+json`."
+        ),
     },
     {
         "name": "Health",
@@ -13,22 +16,34 @@ OPENAPI_TAGS = [
     },
     {
         "name": "Info",
-        "description": "Service metadata endpoints (name, version, build/runtime info).",
+        "description": "Service metadata endpoints (name, version, runtime info).",
     },
     {
         "name": "Auth",
-        "description": "Authentication/authorization helpers and protected example endpoints.",
+        "description": (
+            "Authentication/authorization helpers and protected example endpoints. "
+            "Use the Swagger UI 'Authorize' button to set `Bearer <token>`."
+        ),
     },
     {
         "name": "Projects",
-        "description": "Project management (CRUD, filtering, pagination).",
+        "description": (
+            "Project management (CRUD, filtering, pagination). "
+            "All endpoints require a Bearer token; write operations may require admin roles."
+        ),
     },
     {
         "name": "Tasks",
-        "description": "Task management (CRUD, filtering, pagination).",
+        "description": (
+            "Task management (CRUD, filtering, pagination). "
+            "All endpoints require a Bearer token; delete requires admin roles."
+        ),
     },
     {
         "name": "Vulnerabilities",
-        "description": "Vulnerability management (CRUD, filtering, pagination).",
+        "description": (
+            "Vulnerability management (CRUD, filtering, pagination). "
+            "All endpoints require a Bearer token; delete requires admin roles."
+        ),
     },
 ]

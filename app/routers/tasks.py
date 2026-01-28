@@ -5,13 +5,12 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
+from fastapi import APIRouter, Depends, Query, Security, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import AuthenticatedUser, get_current_user, require_roles
 from app.common.errors import COMMON_ERROR_RESPONSES
 from app.dependencies.db import get_db_session
-from app.domain.errors import NotFoundError
 from app.domain.schemas import ListResponse, TaskCreate, TaskRead, TaskUpdate
 from app.domain.services import TaskService
 
@@ -37,21 +36,29 @@ async def create_task(
     PUBLIC_INTERFACE
     Create a task.
 
+    Example request:
+        {
+          "project_id": "00000000-0000-0000-0000-000000000000",
+          "title": "Run initial scan",
+          "description": "Kick off scanning against the staging environment.",
+          "status": "open"
+        }
+
     Returns:
         The created task.
+
+    Errors:
+        - 404 (problem+json): if the referenced project does not exist.
     """
     svc = TaskService(db)
-    try:
-        task = await svc.create(
-            user=user,
-            project_id=payload.project_id,
-            title=payload.title,
-            description=payload.description,
-            status=payload.status,
-        )
-        return TaskRead.model_validate(task)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    task = await svc.create(
+        user=user,
+        project_id=payload.project_id,
+        title=payload.title,
+        description=payload.description,
+        status=payload.status,
+    )
+    return TaskRead.model_validate(task)
 
 
 @router.get(
@@ -115,13 +122,13 @@ async def get_task(
 
     Returns:
         The task.
+
+    Errors:
+        - 404 (problem+json): if the task does not exist.
     """
     svc = TaskService(db)
-    try:
-        task = await svc.get(task_id=task_id)
-        return TaskRead.model_validate(task)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    task = await svc.get(task_id=task_id)
+    return TaskRead.model_validate(task)
 
 
 @router.patch(
@@ -143,21 +150,24 @@ async def update_task(
     PUBLIC_INTERFACE
     Update a task by id (partial update).
 
+    Example request:
+        { "status": "done" }
+
     Returns:
         Updated task.
+
+    Errors:
+        - 404 (problem+json): if the task does not exist.
     """
     svc = TaskService(db)
-    try:
-        task = await svc.update(
-            user=user,
-            task_id=task_id,
-            title=payload.title,
-            description=payload.description,
-            status=payload.status,
-        )
-        return TaskRead.model_validate(task)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    task = await svc.update(
+        user=user,
+        task_id=task_id,
+        title=payload.title,
+        description=payload.description,
+        status=payload.status,
+    )
+    return TaskRead.model_validate(task)
 
 
 @router.delete(
@@ -183,12 +193,11 @@ async def delete_task(
 
     Returns:
         None.
+
+    Errors:
+        - 404 (problem+json): if the task does not exist.
+        - 403 (problem+json): if the user lacks required roles.
     """
     svc = TaskService(db)
-    try:
-        await svc.delete(user=user, task_id=task_id)
-        return None
-    except NotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except PermissionError as exc:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    await svc.delete(user=user, task_id=task_id)
+    return None

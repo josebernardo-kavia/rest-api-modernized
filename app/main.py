@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
 from app.api.routes import router as api_routes_router
+from app.common.exception_handlers import register_exception_handlers
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.middleware.correlation import CorrelationIdMiddleware
@@ -44,6 +45,9 @@ app = FastAPI(
     version=settings.APP_VERSION,
     openapi_tags=OPENAPI_TAGS,
 )
+
+# Centralized error handling (RFC7807 problem+json)
+register_exception_handlers(app)
 
 # Correlation/request-id middleware
 app.add_middleware(CorrelationIdMiddleware)
@@ -90,6 +94,45 @@ api_app = FastAPI(
     version=settings.APP_VERSION,
     openapi_tags=OPENAPI_TAGS,
 )
+
+# Centralized error handling (RFC7807 problem+json)
+register_exception_handlers(api_app)
+
+
+@api_app.get(
+    "/errors",
+    summary="Error format (problem+json)",
+    description=(
+        "All error responses use RFC7807 Problem Details with media type "
+        "`application/problem+json`. This endpoint documents the envelope shape "
+        "and provides examples."
+    ),
+    tags=["Root"],
+    operation_id="api_error_format",
+)
+async def error_format_docs() -> Dict[str, Any]:
+    """
+    PUBLIC_INTERFACE
+    Describe the global error envelope.
+
+    Returns:
+        A JSON object describing the RFC7807 `problem+json` envelope used by this API.
+    """
+    return {
+        "media_type": "application/problem+json",
+        "fields": ["type", "title", "status", "detail", "instance", "errors?"],
+        "notes": [
+            "`errors` is included for validation failures (422) and contains FastAPI/Pydantic error objects.",
+            "`instance` is set to the request path.",
+        ],
+        "example": {
+            "type": "about:blank",
+            "title": "Not Found",
+            "status": 404,
+            "detail": "Resource not found.",
+            "instance": "/api/projects/00000000-0000-0000-0000-000000000000",
+        },
+    }
 
 def _custom_openapi() -> Dict[str, Any]:
     """
