@@ -11,6 +11,11 @@ dependencies = [
   "sqlalchemy[asyncio]==2.0.37",
   "asyncpg",
   "alembic",
+
+  # Auth (Keycloak-compatible OIDC / JWT validation)
+  "httpx",
+  "PyJWT",
+  "cryptography",
 ]
 
 [project.optional-dependencies]

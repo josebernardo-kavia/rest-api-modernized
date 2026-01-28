@@ -15,4 +15,8 @@ OPENAPI_TAGS = [
         "name": "Info",
         "description": "Service metadata endpoints (name, version, build/runtime info).",
     },
+    {
+        "name": "Auth",
+        "description": "Authentication/authorization helpers and protected example endpoints.",
+    },
 ]

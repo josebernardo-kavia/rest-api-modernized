@@ -30,18 +30,49 @@ class Settings(BaseSettings):
     )
     LOG_LEVEL: str = Field(default="INFO", description="Python logging level (e.g., INFO, DEBUG).")
 
-    # Placeholders for future steps (DB and auth).
+    # Database
     DATABASE_URL: str = Field(
         default="",
-        description="Database connection URL (placeholder; configure in environment).",
+        description="Database connection URL (configure in environment).",
     )
+
+    # OIDC / Keycloak-compatible JWT validation
+    OIDC_ISSUER_URL: str = Field(
+        default="",
+        description=(
+            "OIDC issuer base URL. Example: "
+            "https://keycloak.example.com/realms/<realm>"
+        ),
+    )
+    OIDC_AUDIENCE: str = Field(
+        default="",
+        description=(
+            "Expected access token audience ('aud'). "
+            "For Keycloak this is often 'account' or the client-id depending on configuration."
+        ),
+    )
+    OIDC_CLIENT_ID: str = Field(
+        default="",
+        description=(
+            "Client id of this API (resource). Used for role extraction from "
+            "resource_access[client_id].roles."
+        ),
+    )
+    OIDC_CACHE_TTL_SECONDS: int = Field(
+        default=300,
+        ge=30,
+        le=86400,
+        description="TTL (seconds) for OIDC discovery + JWKS cache.",
+    )
+
+    # Back-compat placeholders (deprecated; kept to avoid breaking earlier scaffolding)
     KEYCLOAK_ISSUER_URL: str = Field(
         default="",
-        description="Keycloak issuer URL used to validate JWTs (placeholder).",
+        description="DEPRECATED (use OIDC_ISSUER_URL).",
     )
     KEYCLOAK_AUDIENCE: str = Field(
         default="",
-        description="Expected JWT audience for this API (placeholder).",
+        description="DEPRECATED (use OIDC_AUDIENCE).",
     )
 
 

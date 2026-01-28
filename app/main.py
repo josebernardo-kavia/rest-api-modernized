@@ -15,6 +15,7 @@ from typing import Any, Dict, List
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 
 from app.api.routes import router as api_routes_router
 from app.core.config import get_settings
@@ -23,6 +24,7 @@ from app.middleware.correlation import CorrelationIdMiddleware
 from app.openapi.metadata import OPENAPI_TAGS
 from app.routers.health import router as health_router
 from app.routers.info import router as info_router
+from app.routers.protected import router as protected_router
 
 
 def _parse_cors_origins(origins: List[str]) -> List[str]:
@@ -86,10 +88,46 @@ api_app = FastAPI(
     openapi_tags=OPENAPI_TAGS,
 )
 
+def _custom_openapi() -> Dict[str, Any]:
+    """
+    Create OpenAPI schema for the prefixed API app with an HTTP bearer security scheme.
+
+    This makes Swagger UI show an "Authorize" button for pasting Bearer access tokens.
+    """
+    if api_app.openapi_schema:
+        return api_app.openapi_schema  # type: ignore[return-value]
+
+    schema = get_openapi(
+        title=api_app.title,
+        version=api_app.version,
+        description=api_app.description,
+        routes=api_app.routes,
+        tags=OPENAPI_TAGS,
+    )
+
+    components = schema.setdefault("components", {})
+    security_schemes = components.setdefault("securitySchemes", {})
+    security_schemes["BearerAuth"] = {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": (
+            "Paste a Keycloak access token here: `Bearer <token>`.\n\n"
+            "The API validates RS256 signature via OIDC discovery + JWKS."
+        ),
+    }
+
+    api_app.openapi_schema = schema  # type: ignore[assignment]
+    return api_app.openapi_schema  # type: ignore[return-value]
+
+
+api_app.openapi = _custom_openapi  # type: ignore[method-assign]
+
 # Include requested routers under API prefix:
 api_app.include_router(api_routes_router)
 api_app.include_router(health_router)
 api_app.include_router(info_router)
+api_app.include_router(protected_router)
 
 # Mount the API app under prefix
 app.mount(settings.API_PREFIX, api_app)
