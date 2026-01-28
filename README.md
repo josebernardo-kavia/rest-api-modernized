@@ -46,7 +46,31 @@ Deprecated (back-compat):
 - `KEYCLOAK_ISSUER_URL`
 - `KEYCLOAK_AUDIENCE`
 
-### 4) Run the server
+### 4) Apply database migrations (required for DB features)
+
+```bash
+alembic upgrade head
+```
+
+### 5) Seed demo data (optional, for local development)
+
+This inserts a small demo dataset (Projects/Tasks/Vulnerabilities) for UI testing.
+
+```bash
+python -m app.cli seed
+```
+
+If you want to clear existing rows first:
+
+```bash
+python -m app.cli seed --reset
+```
+
+Notes:
+- The CLI uses `DATABASE_URL` from your environment (or `.env`).
+- Ensure migrations are applied (`alembic upgrade head`) before seeding.
+
+### 6) Run the server
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
