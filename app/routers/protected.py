@@ -4,12 +4,40 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 
 from app.auth.dependencies import AuthenticatedUser, get_current_user, require_roles
 from app.common.errors import COMMON_ERROR_RESPONSES
 
 router = APIRouter(tags=["Auth"])
+
+
+@router.get(
+    "/me",
+    summary="Current user identity",
+    description="Returns the authenticated user principal derived from the Bearer access token.",
+    operation_id="auth_me",
+    responses=COMMON_ERROR_RESPONSES,
+)
+async def me(user: AuthenticatedUser = Security(get_current_user)) -> Dict[str, Any]:
+    """
+    PUBLIC_INTERFACE
+    Minimal authenticated endpoint.
+
+    Requires:
+        Authorization: Bearer <access_token>
+
+    Returns:
+        Basic identity fields and roles extracted from the token.
+    """
+    return {
+        "subject": user.subject,
+        "username": user.username,
+        "email": user.email,
+        "roles": sorted(user.roles),
+        "issuer": user.issuer,
+        "audience": user.audience,
+    }
 
 
 @router.get(
@@ -19,7 +47,7 @@ router = APIRouter(tags=["Auth"])
     operation_id="protected_example",
     responses=COMMON_ERROR_RESPONSES,
 )
-async def protected_example(user: AuthenticatedUser = Depends(get_current_user)) -> Dict[str, Any]:
+async def protected_example(user: AuthenticatedUser = Security(get_current_user)) -> Dict[str, Any]:
     """
     PUBLIC_INTERFACE
     Example protected endpoint.

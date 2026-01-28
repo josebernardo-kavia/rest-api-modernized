@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, FrozenSet, List, Optional, Sequence, Set
+from typing import Any, Dict, FrozenSet, Optional, Sequence, Set
 
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jwt import PyJWKClient
 from jwt.exceptions import InvalidTokenError
 
 from app.auth.oidc import fetch_jwks
